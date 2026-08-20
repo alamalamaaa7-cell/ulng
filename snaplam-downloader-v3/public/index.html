@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SnapLam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #F7F3EB;
+            color: #4A362F;
+        }
+        .font-heading { font-family: 'Baloo 2', cursive, sans-serif; }
+        .font-mono-code { font-family: 'DM Mono', monospace; }
+        
+        /* Kartu organik dengan sudut asimetris ala cetak biru */
+        .retro-card {
+            background-color: #FFFDF9;
+            border: 2.5px solid #4A362F;
+            border-radius: 32px 20px 36px 22px;
+            box-shadow: 4px 4px 0px #4A362F;
+        }
+        .retro-card-sm {
+            background-color: #FFFDF9;
+            border: 2px solid #4A362F;
+            border-radius: 22px 16px 24px 18px;
+            box-shadow: 3px 3px 0px #4A362F;
+        }
+        .retro-btn {
+            border: 2px solid #4A362F;
+            box-shadow: 3px 3px 0px #4A362F;
+            transition: all 0.15s ease-in-out;
+        }
+        .retro-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #4A362F;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #9FD5C0; border-radius: 10px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-[#F7F3EB] flex justify-center items-center min-h-[100dvh] p-0 sm:p-4">
+
+    <div class="w-full max-w-md bg-[#F7F3EB] sm:border-[3px] border-[#4A362F] sm:rounded-[40px] flex flex-col h-[100dvh] sm:h-[94vh] sm:shadow-[8px_8px_0px_#4A362F] overflow-hidden relative">
+
+        <!-- =================== VIEW AUTH (LOGIN & REGISTER) =================== -->
+        <div id="viewAuth" class="flex flex-col h-full items-center justify-center p-6 relative overflow-y-auto bg-gradient-to-b from-[#F7F3EB] via-[#FFC7A4]/15 to-[#9FD5C0]/20">
+            
+            <div class="mb-6 text-center flex flex-col items-center">
+                <span class="w-20 h-20 bg-[#FFC7A4] border-[2.5px] border-[#4A362F] rounded-[32px_18px_32px_18px] flex items-center justify-center shadow-[4px_4px_0px_#4A362F] mb-3 transform -rotate-3 hover:rotate-0 transition-transform overflow-hidden">
+                    <img src="https://c.termai.cc/i107/EmVFo.png" alt="SnapLam Icon" class="w-full h-full object-cover">
+                </span>
+                <h1 class="font-heading text-4xl font-extrabold text-[#4A362F] leading-none mb-1">Snap<span class="text-[#F0906C]">Lam</span></h1>
+                <p class="text-[11px] font-extrabold text-[#4A362F]/70 uppercase tracking-widest font-mono-code"></p>
+            </div>
+
+            <!-- Login Box Estetis -->
+            <div id="loginBox" class="retro-card w-full p-6 space-y-4 bg-[#FFFDF9]">
+                <div class="text-center border-b-2 border-dashed border-[#4A362F]/30 pb-3">
+                    <h2 class="font-heading text-2xl font-extrabold text-[#4A362F]">Login Sistem</h2>
+                    <p class="text-[11px] text-[#4A362F]/70 font-semibold">Masuk untuk mengunduh tanpa batas kuota</p>
+                </div>
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-[#4A362F] block mb-1">Username</label>
+                        <input type="text" id="loginUser" placeholder="masukan username" class="w-full px-4 py-3 bg-[#F7F3EB] border-2 border-[#4A362F] rounded-xl text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-[#9FD5C0]">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-[#4A362F] block mb-1">Kata Sandi</label>
+                        <input type="password" id="loginPass" placeholder="••••••••" class="w-full px-4 py-3 bg-[#F7F3EB] border-2 border-[#4A362F] rounded-xl text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-[#9FD5C0]">
+                    </div>
+                </div>
+                <button onclick="prosesLogin()" class="w-full retro-btn bg-[#9FD5C0] hover:bg-[#8bc9b2] text-[#4A362F] py-3.5 rounded-2xl font-extrabold text-sm shadow-[3px_3px_0px_#4A362F]">Masuk Sekarang</button>
+                <div class="text-center pt-2">
+                    <p class="text-xs font-bold text-[#4A362F]/80 cursor-pointer" onclick="toggleAuthMode('register')">Belum punya akun? <span class="text-[#F0906C] underline font-extrabold">Daftar Akun Baru</span></p>
+                </div>
+            </div>
+
+            <!-- Register Box Estetis -->
+            <div id="registerBox" class="hidden retro-card w-full p-6 space-y-4 bg-[#FFFDF9]">
+                <div class="text-center border-b-2 border-dashed border-[#4A362F]/30 pb-3">
+                    <h2 class="font-heading text-2xl font-extrabold text-[#4A362F]"> Buat Akun Baru</h2>
+                    <p class="text-[11px] text-[#4A362F]/70 font-semibold">Gabung sekarang dan nikmati unduhan super cepat</p>
+                </div>
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-[#4A362F] block mb-1">Username Baru</label>
+                        <input type="text" id="regUser" placeholder="Buat username unik..." class="w-full px-4 py-3 bg-[#F7F3EB] border-2 border-[#4A362F] rounded-xl text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-[#F0906C]">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-[#4A362F] block mb-1">Kata Sandi Baru</label>
+                        <input type="password" id="regPass" placeholder="Buat kata sandi aman..." class="w-full px-4 py-3 bg-[#F7F3EB] border-2 border-[#4A362F] rounded-xl text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-[#F0906C]">
+                    </div>
+                </div>
+                <button onclick="prosesDaftar()" class="w-full retro-btn bg-[#F0906C] hover:bg-[#e27e5a] text-white py-3.5 rounded-2xl font-extrabold text-sm shadow-[3px_3px_0px_#4A362F]">Daftar Akun</button>
+                <div class="text-center pt-2">
+                    <p class="text-xs font-bold text-[#4A362F]/80 cursor-pointer" onclick="toggleAuthMode('login')">Sudah punya akun? <span class="text-[#9FD5C0] underline font-extrabold">Masuk di sini</span></p>
+                </div>
+            </div>
+            
+            <p id="authError" class="absolute bottom-6 bg-rose-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-[2px_2px_0px_#4A362F] hidden animate-bounce"></p>
+        </div>
+
+
+        <!-- =================== VIEW USER APP (DOWNLOADER) =================== -->
+        <div id="viewUserApp" class="hidden flex flex-col h-full w-full">
+            
+            <!-- HEADER (User) -->
+            <header class="flex-none flex items-center justify-between px-5 py-4 border-b-2 border-dashed border-[#4A362F]/30 bg-[#F7F3EB] z-10">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleUserModal(true)" class="retro-btn bg-[#C384E8] hover:bg-[#b574dc] text-[#4A362F] w-10 h-10 rounded-[14px_10px_14px_10px] flex items-center justify-center font-bold text-xl shadow-[2px_2px_0px_#4A362F]" title="Menu All-User">
+                        <span class="leading-none mb-1">☰</span>
+                    </button>
+                    <span class="w-8 h-8 rounded-[10px_6px_10px_6px] border-2 border-[#4A362F] overflow-hidden shrink-0 shadow-[1.5px_1.5px_0px_#4A362F]">
+                        <img src="https://c.termai.cc/i107/EmVFo.png" alt="SnapLam Icon" class="w-full h-full object-cover">
+                    </span>
+                    <span class="font-heading text-2xl font-extrabold tracking-wide text-[#4A362F]">Snap<span class="text-[#F0906C]">Lam</span></span>
+                </div>
+                <div class="flex items-center gap-2 bg-[#FFFDF9] border-2 border-[#4A362F] px-3.5 py-1.5 rounded-full text-xs font-extrabold text-[#4A362F] shadow-[2px_2px_0px_#4A362F]">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="currentUserDisplay">User</span>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+                
+                <!-- Broadcast Banner dari Admin -->
+                <div id="broadcastBanner" class="hidden retro-card bg-[#F2C266] p-4 relative overflow-hidden shadow-[4px_4px_0px_#4A362F]">
+                    <button onclick="tutupBroadcast()" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center bg-[#FFFDF9] border border-[#4A362F] rounded-full text-xs font-extrabold shadow-[1px_1px_0px_#4A362F] z-10">✕</button>
+                    <div class="flex items-center gap-2 mb-2 relative z-10">
+                        <span class="bg-rose-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">Info Admin</span>
+                        <span class="text-xs font-bold text-[#4A362F]">Pengumuman Penting</span>
+                    </div>
+                    <img id="broadcastImage" src="" class="hidden w-full h-auto object-cover max-h-40 rounded-2xl border-2 border-[#4A362F] mb-2.5 relative z-10">
+                    <p id="broadcastText" class="text-xs text-[#4A362F] relative z-10 font-bold leading-relaxed"></p>
+                </div>
+
+                <!-- Banner Utama (16:9) -->
+                <div class="retro-card overflow-hidden p-0 bg-[#FFFDF9]">
+                    <div class="w-full aspect-video">
+                        <img src="https://c.termai.cc/i143/tLskWCV.png" alt="SnapLam Banner" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- Section Input Tautan & Tombol Resolusi Keren -->
+                <section class="retro-card p-5 bg-[#FFFDF9] space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-heading text-2xl font-extrabold text-[#4A362F]">Unduh Media</h2>
+                        <span class="text-[10px] bg-[#9FD5C0]/50 text-[#4A362F] px-2.5 py-1 rounded-xl border border-[#4A362F]/40 font-extrabold uppercase tracking-wider">Tanpa Batas</span>
+                    </div>
+                    
+                    <!-- Input URL -->
+                    <div class="relative flex items-center">
+                        <input id="urlInput" type="text" placeholder="Tempel URL (YouTube/TikTok/IG/Twitter)..." class="w-full pl-4 pr-[76px] py-4 bg-[#F7F3EB] border-2 border-[#4A362F] rounded-2xl font-mono-code text-xs text-[#4A362F] focus:outline-none focus:border-[#F0906C]">
+                        <button onclick="simulasiProses()" class="absolute right-2 retro-btn bg-[#F0906C] hover:bg-[#e27e5a] text-white px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-1">Ambil</button>
+                    </div>
+
+                    <!-- Pilihan Format Resolusi Modern Estetis (3 Kartu Pilihan) -->
+                    <div class="grid grid-cols-3 gap-3 pt-1">
+                        <div class="retro-card-sm bg-gradient-to-br from-[#FFC7A4]/50 to-[#FFC7A4]/20 p-3 text-center cursor-pointer hover:scale-[1.03] transition-transform" onclick="eksekusiUnduhanPilihan('video_1080p.mp4')">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <span class="font-heading font-extrabold text-base text-[#4A362F]">MP4</span>
+                                <span class="bg-[#F0906C] text-white text-[9px] px-1.5 py-0.2 rounded font-extrabold">HD</span>
+                            </div>
+                            <span class="text-[10px] font-extrabold text-[#4A362F]/80 block">1080p Jernih</span>
+                            <span class="text-[9px] font-mono-code text-[#4A362F]/60 mt-0.5 block">Klik Unduh</span>
+                        </div>
+                        <div class="retro-card-sm bg-gradient-to-br from-[#9FD5C0]/50 to-[#9FD5C0]/20 p-3 text-center cursor-pointer hover:scale-[1.03] transition-transform" onclick="eksekusiUnduhanPilihan('video_720p.mp4')">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <span class="font-heading font-extrabold text-base text-[#4A362F]">MP4</span>
+                                <span class="bg-[#9FD5C0] text-[#4A362F] text-[9px] px-1.5 py-0.2 rounded font-extrabold border border-[#4A362F]/40">SD</span>
+                            </div>
+                            <span class="text-[10px] font-extrabold text-[#4A362F]/80 block">720p Standar</span>
+                            <span class="text-[9px] font-mono-code text-[#4A362F]/60 mt-0.5 block">Klik Unduh</span>
+                        </div>
+                        <div class="retro-card-sm bg-gradient-to-br from-[#C384E8]/50 to-[#C384E8]/20 p-3 text-center cursor-pointer hover:scale-[1.03] transition-transform" onclick="eksekusiUnduhanPilihan('audio_hq.mp3')">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <span class="font-heading font-extrabold text-base text-[#4A362F]">MP3</span>
+                                <span class="bg-[#C384E8] text-white text-[9px] px-1.5 py-0.2 rounded font-extrabold">HQ</span>
+                            </div>
+                            <span class="text-[10px] font-extrabold text-[#4A362F]/80 block">Audio 320k</span>
+                            <span class="text-[9px] font-mono-code text-[#4A362F]/60 mt-0.5 block">Klik Unduh</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section Panduan Cara Menggunakan SnapLam -->
+                <section class="retro-card p-5 bg-[#FFFDF9] space-y-3">
+                    <h2 class="font-heading text-xl font-extrabold text-[#4A362F] flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-[#9FD5C0] border-2 border-[#4A362F] flex items-center justify-center text-xs shadow-[1.5px_1.5px_0px_#4A362F]">📖</span>
+                        Cara Menggunakan SnapLam
+                    </h2>
+                    <div class="space-y-2 text-xs text-[#4A362F]/80 font-semibold leading-relaxed">
+                        <div class="flex items-start gap-2.5 bg-[#F7F3EB] p-3 rounded-xl border border-[#4A362F]/20">
+                            <span class="w-5 h-5 bg-[#FFC7A4] border border-[#4A362F] rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+                            <p>Salin tautan video dari YouTube, TikTok, Instagram, atau Twitter dll.</p>
+                        </div>
+                        <div class="flex items-start gap-2.5 bg-[#F7F3EB] p-3 rounded-xl border border-[#4A362F]/20">
+                            <span class="w-5 h-5 bg-[#9FD5C0] border border-[#4A362F] rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">2</span>
+                            <p>Tempel tautan pada kolom unduh di atas, lalu klik tombol <b>Ambil</b>.</p>
+                        </div>
+                        <div class="flex items-start gap-2.5 bg-[#F7F3EB] p-3 rounded-xl border border-[#4A362F]/20">
+                            <span class="w-5 h-5 bg-[#C384E8] text-white border border-[#4A362F] rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
+                            <p>Pilih format resolusi yang diinginkan dan file siap diunduh secara instan!</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section F&A (Tanya Jawab Accordion Keren) -->
+                <section class="retro-card p-5 bg-[#FFFDF9] space-y-3">
+                    <h2 class="font-heading text-xl font-extrabold text-[#4A362F] flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-[#F2C266] border-2 border-[#4A362F] flex items-center justify-center text-xs shadow-[1.5px_1.5px_0px_#4A362F]">💡</span>
+                        (F&A)
+                    </h2>
+                    <div class="space-y-2.5 text-xs">
+                        <details class="group bg-[#F7F3EB] border-2 border-[#4A362F]/40 rounded-[20px_10px_20px_10px] overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                            <summary class="flex items-center justify-between p-3.5 font-extrabold cursor-pointer text-[#4A362F] hover:bg-[#9FD5C0]/30 transition-colors">
+                                <span>Apakah unduhan ini gratis dan tanpa batas?</span>
+                                <span class="transition-transform duration-300 group-open:rotate-180">▾</span>
+                            </summary>
+                            <div class="p-3.5 pt-0 text-[#4A362F]/80 font-semibold leading-relaxed">Ya, 100% gratis tanpa batasan kuota unduhan dan bebas watermark selamanya!</div>
+                        </details>
+                        <details class="group bg-[#F7F3EB] border-2 border-[#4A362F]/40 rounded-[10px_20px_10px_20px] overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                            <summary class="flex items-center justify-between p-3.5 font-extrabold cursor-pointer text-[#4A362F] hover:bg-[#FFC7A4]/30 transition-colors">
+                                <span>Platform apa saja yang didukung?</span>
+                                <span class="transition-transform duration-300 group-open:rotate-180">▾</span>
+                            </summary>
+                            <div class="p-3.5 pt-0 text-[#4A362F]/80 font-semibold leading-relaxed">Mendukung penuh YouTube, TikTok, Instagram Reels, dan X Twitter dll.</div>
+                        </details>
+                    </div>
+                </section>
+                <!-- Section Live Sistem Terminal (ikut scroll, senada tema terang) -->
+                <section class="retro-card p-5 bg-[#FFFDF9] space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-heading text-xl font-extrabold text-[#4A362F] flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full bg-[#9FD5C0] border-2 border-[#4A362F] flex items-center justify-center text-xs shadow-[1.5px_1.5px_0px_#4A362F]">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            </span>
+                            Live Sistem
+                        </h2>
+                        <span class="font-mono-code text-[8px] font-extrabold text-[#4A362F] bg-[#F2C266] border border-[#4A362F]/40 px-2 py-1 rounded-full">● AUTO-SYNC</span>
+                    </div>
+
+                    <div id="terminalLog" class="bg-[#F7F3EB] border-2 border-[#4A362F]/30 rounded-2xl p-2.5 max-h-40 overflow-y-auto no-scrollbar font-mono-code text-[9px] flex flex-col gap-1.5">
+                        <div class="flex items-center gap-2 bg-[#FFFDF9] border border-[#4A362F]/30 rounded-2xl pl-3 pr-1.5 py-1.5">
+                            <span class="text-[#4A362F]/50 shrink-0">12:00:01</span>
+                            <span class="text-[#C384E8] font-bold truncate shrink-0 max-w-[64px]">User_Demo</span>
+                            <span class="text-[#4A362F]/80 truncate flex-1">video_1080p.mp4</span>
+                            <span class="shrink-0 text-[8px] font-extrabold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-600">SUKSES</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+            
+            <!-- Modal Menu All-User (Chat, About & Privacy Policy) -->
+            <div id="userMenuModal" class="hidden absolute inset-0 bg-[#4A362F]/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="retro-card w-full h-[540px] bg-[#FFFDF9] p-5 flex flex-col shadow-[8px_8px_0px_rgba(0,0,0,0.5)] relative">
+                    
+                    <div class="flex items-center justify-between border-b-2 border-[#4A362F] pb-3 mb-3 flex-none">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full bg-[#C384E8] border-2 border-[#4A362F] flex items-center justify-center text-xs">💬</span>
+                            <h2 class="font-heading text-xl font-extrabold text-[#4A362F] mt-0.5">Menu Komunitas & Info</h2>
+                        </div>
+                        <button onclick="toggleUserModal(false)" class="retro-btn bg-[#FFC7A4] w-8 h-8 rounded-full font-bold flex items-center justify-center text-sm shadow-[2px_2px_0px_#4A362F]">✕</button>
+                    </div>
+
+                    <!-- Tab Menu All-User -->
+                    <div class="flex gap-2 mb-3 flex-none">
+                        <button onclick="switchUserTab('chat')" id="tabBtnChat" class="flex-1 py-1.5 px-3 bg-[#9FD5C0] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]">Menu Chat</button>
+                        <button onclick="switchUserTab('about')" id="tabBtnAbout" class="flex-1 py-1.5 px-3 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]">Tentang Kami</button>
+                        <button onclick="switchUserTab('privacy')" id="tabBtnPrivacy" class="flex-1 py-1.5 px-3 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]">Privasi</button>
+                    </div>
+
+                    <!-- Konten Tab Obrolan -->
+                    <div id="userTabChat" class="flex-1 flex flex-col overflow-hidden bg-[#F7F3EB] rounded-2xl border-2 border-[#4A362F]/30 p-3 mb-3">
+                        <span class="text-[9px] font-extrabold text-center text-gray-400 uppercase tracking-widest block mb-2">- SnapLam Community -</span>
+                        <div id="chatMessages" class="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pb-2">
+                            <div class="flex flex-col gap-0.5 items-start">
+                                <span class="text-[8px] font-extrabold text-gray-400">Sistem</span>
+                                <div class="bg-[#FFFDF9] border border-[#4A362F]/30 rounded-xl rounded-tl-none px-3 py-2 text-xs text-[#4A362F] font-semibold w-fit max-w-[85%]">Selamat datang di SnapLam Downloader!</div>
+                            </div>
+                        </div>
+                        <div class="flex-none flex gap-1.5 pt-2.5 border-t border-dashed border-[#4A362F]/30 mt-1">
+                            <input id="chatInput" type="text" placeholder="Ketik pesan..." class="flex-1 px-3 py-2 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-mono-code focus:outline-none" onkeypress="if(event.key === 'Enter') kirimChatUser()">
+                            <button onclick="kirimChatUser()" class="retro-btn bg-[#9FD5C0] hover:bg-[#8bc9b2] px-4 rounded-xl font-extrabold text-xs">Kirim</button>
+                        </div>
+                    </div>
+
+                    <!-- Konten Tab Tentang Kami (About) -->
+                    <div id="userTabAbout" class="hidden flex-1 overflow-y-auto no-scrollbar bg-[#F7F3EB] rounded-2xl border-2 border-[#4A362F]/30 p-4 space-y-3 mb-3 text-xs text-[#4A362F]">
+                        <h3 class="font-heading font-extrabold text-base text-[#F0906C]">Tentang SnapLam!</h3>
+                        <p class="font-semibold leading-relaxed">SnapLam adalah platform unduh media digital berbasis retro organik yang cepat, bebas iklan mengganggu, dan mendukung berbagai platform media sosial terkemuka.</p>
+                        <p class="font-semibold leading-relaxed">Dibangun dengan antarmuka yang ramah pengguna untuk memastikan pengalaman pengunduhan terbaik tanpa batas kuota.</p>
+                    </div>
+
+                    <!-- Konten Tab Kebijakan Privasi (Privacy Policy) -->
+                    <div id="userTabPrivacy" class="hidden flex-1 overflow-y-auto no-scrollbar bg-[#F7F3EB] rounded-2xl border-2 border-[#4A362F]/30 p-4 space-y-3 mb-3 text-xs text-[#4A362F]">
+                        <h3 class="font-heading font-extrabold text-base text-[#9FD5C0]">Kebijakan Privasi</h3>
+                        <p class="font-semibold leading-relaxed">Kami sangat menghargai privasi Anda. SnapLam tidak menyimpan data tautan pribadi atau riwayat unduhan sensitif Anda di server publik.</p>
+                        <p class="font-semibold leading-relaxed">Semua aktivitas unduhan dienkripsi secara aman demi kenyamanan dan keamanan komunitas.</p>
+                    </div>
+
+                    <!-- Profil & Keluar -->
+                    <div class="flex-none flex items-center justify-between border-t-2 border-dashed border-[#4A362F]/30 pt-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-full bg-[#FFC7A4] border-2 border-[#4A362F] flex items-center justify-center text-xs font-extrabold">👤</div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-extrabold text-[#4A362F] leading-tight" id="modalUsername">User</span>
+                                <span class="text-[9px] font-mono-code text-emerald-600 font-extrabold">Online Aktif</span>
+                            </div>
+                        </div>
+                        <button onclick="prosesLogout()" class="retro-btn bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]">Keluar Akun</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- =================== VIEW ADMIN DASHBOARD (PENGELOLA KENDALI) =================== -->
+        <div id="viewAdminDashboard" class="hidden flex flex-col h-full w-full bg-[#1A1A1A] text-white">
+            
+            <header class="flex-none flex items-center justify-between px-5 py-4 bg-[#222] border-b-2 border-[#4A362F]">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">🛡️</span>
+                    <div>
+                        <h1 class="font-heading text-xl font-extrabold text-[#F2C266] leading-tight">Panel Pusat Admin</h1>
+                        <p class="text-[9px] font-mono-code text-gray-400">Sistem Monitoring & Kontrol</p>
+                    </div>
+                </div>
+                <button onclick="prosesLogout()" class="retro-btn bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-xl font-extrabold text-xs shadow-[2px_2px_0px_#000]">Keluar</button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-5 space-y-4">
+                
+                <!-- Statistik Real-time Admin -->
+                <div class="grid grid-cols-2 gap-3.5">
+                    <div class="bg-[#242220] border-2 border-[#4A362F] rounded-[24px_14px_24px_14px] p-4 shadow-[3px_3px_0px_#000]">
+                        <span class="text-[10px] text-gray-400 font-mono-code uppercase font-extrabold block">Total Unduhan</span>
+                        <span class="font-heading text-4xl text-white block mt-1" id="adminTotal">3,492</span>
+                    </div>
+                    <div class="bg-[#242220] border-2 border-[#4A362F] rounded-[14px_24px_14px_24px] p-4 shadow-[3px_3px_0px_#000]">
+                        <span class="text-[10px] text-emerald-400 font-mono-code uppercase font-extrabold block">Sukses vs Gagal</span>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span class="font-heading text-3xl text-emerald-400" id="adminSukses">3,480</span>
+                            <span class="font-heading text-xl text-rose-500" id="adminGagal">12</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kirim Broadcast Panel -->
+                <div class="bg-[#242220] border-2 border-[#4A362F] rounded-[28px_16px_28px_16px] p-4 shadow-[3px_3px_0px_#000]">
+                    <h3 class="text-xs font-extrabold text-[#F2C266] uppercase mb-2.5 flex items-center gap-1.5">📢 Kirim Broadcast Pengumuman</h3>
+                    <input id="adminBroadcastText" type="text" placeholder="Pesan pengumuman untuk seluruh pengguna..." class="w-full px-3.5 py-2.5 bg-[#1A1A1A] border border-[#4A362F] rounded-2xl text-xs text-white mb-2.5 focus:outline-none focus:border-[#F2C266]">
+                    <div class="flex gap-2">
+                        <input id="adminBroadcastImg" type="text" placeholder="URL Foto Banner (Opsional)" class="flex-1 px-3.5 py-2.5 bg-[#1A1A1A] border border-[#4A362F] rounded-2xl text-[10px] text-white focus:outline-none">
+                        <button onclick="kirimBroadcastAdmin()" class="retro-btn bg-[#F2C266] hover:bg-[#e0b05b] text-black px-4 py-2.5 rounded-2xl font-extrabold text-xs shadow-[2px_2px_0px_#000]">Kirim</button>
+                    </div>
+                </div>
+
+                <!-- Live Chat Monitor (Private Admin) -->
+                <div class="bg-[#242220] border-2 border-[#4A362F] rounded-[16px_28px_16px_28px] p-4 flex flex-col h-52 shadow-[3px_3px_0px_#000]">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-extrabold text-[#9FD5C0] uppercase flex items-center gap-1.5">💬 Monitor Chat (Private Admin)</h3>
+                        <button onclick="bersihkanChatSistem()" class="text-[9px] bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-full font-bold">Bersihkan</button>
+                    </div>
+                    <div id="adminChatLog" class="flex-1 bg-[#1A1A1A] border border-[#4A362F]/60 rounded-2xl p-2.5 overflow-y-auto no-scrollbar font-mono-code text-[10px] space-y-1.5">
+                        <div class="text-gray-500">[Sistem] Menunggu obrolan pengguna...</div>
+                    </div>
+                    <div class="flex gap-1.5 mt-2.5">
+                        <input id="adminChatInput" type="text" placeholder="Balas ke obrolan global..." class="flex-1 px-3 py-2 bg-[#1A1A1A] border border-[#4A362F]/70 rounded-2xl text-xs text-white focus:outline-none">
+                        <button onclick="kirimChatAdmin()" class="retro-btn bg-[#9FD5C0] hover:bg-[#8bc9b2] text-black px-3.5 py-2 rounded-2xl font-extrabold text-xs">Balas</button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+    </div>
+
+    <script>
+        let currentUser = null;
+        let isAdmin = false;
+
+        function toggleAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('loginBox').classList.add('hidden');
+                document.getElementById('registerBox').classList.remove('hidden');
+            } else {
+                document.getElementById('registerBox').classList.add('hidden');
+                document.getElementById('loginBox').classList.remove('hidden');
+            }
+        }
+
+        function tunjukkanError(pesan) {
+            const err = document.getElementById('authError');
+            err.innerText = pesan;
+            err.classList.remove('hidden');
+            setTimeout(() => err.classList.add('hidden'), 3500);
+        }
+
+        async function prosesDaftar() {
+            const user = document.getElementById('regUser').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+            if(!user || !pass) return tunjukkanError("Isi semua kolom pendaftaran dengan benar!");
+
+            const tombol = document.querySelector('#registerBox button[onclick="prosesDaftar()"]');
+            const teksAsli = tombol.innerText;
+            tombol.disabled = true;
+            tombol.innerText = 'Memproses...';
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    return tunjukkanError(result.message || "Pendaftaran gagal.");
+                }
+
+                document.getElementById('regUser').value = '';
+                document.getElementById('regPass').value = '';
+                toggleAuthMode('login');
+                tunjukkanError("Berhasil mendaftar! Silakan masuk.");
+                const err = document.getElementById('authError');
+                err.classList.replace('bg-rose-500', 'bg-emerald-500');
+                setTimeout(() => err.classList.replace('bg-emerald-500', 'bg-rose-500'), 3500);
+            } catch (error) {
+                tunjukkanError("Tidak dapat menghubungi server.");
+            } finally {
+                tombol.disabled = false;
+                tombol.innerText = teksAsli;
+            }
+        }
+
+        async function prosesLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+
+            if(!user) return tunjukkanError("Masukkan username Anda!");
+            if(!pass) return tunjukkanError("Masukkan kata sandi Anda!");
+
+            const tombol = document.querySelector('#loginBox button[onclick="prosesLogin()"]');
+            const teksAsli = tombol.innerText;
+            tombol.disabled = true;
+            tombol.innerText = 'Memproses...';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    return tunjukkanError(result.message || "Login gagal.");
+                }
+
+                terapkanSesiPengguna(result.user);
+            } catch (error) {
+                tunjukkanError("Tidak dapat menghubungi server.");
+            } finally {
+                tombol.disabled = false;
+                tombol.innerText = teksAsli;
+            }
+        }
+
+        function terapkanSesiPengguna(user) {
+            currentUser = user.role === 'admin' ? 'Admin Utama' : user.username;
+            isAdmin = user.role === 'admin';
+
+            if (isAdmin) {
+                bukaTampilanApp('admin');
+            } else {
+                bukaTampilanApp('user');
+                document.getElementById('currentUserDisplay').innerText = currentUser.substring(0,8) + (currentUser.length>8?'..':'');
+                document.getElementById('modalUsername').innerText = currentUser;
+            }
+
+            mulaiRealtime();
+        }
+
+        async function prosesLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+            } catch (error) {
+                // tetap lanjut logout di sisi tampilan walau request gagal
+            }
+            hentikanRealtime();
+            currentUser = null;
+            isAdmin = false;
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            bukaTampilanApp('auth');
+            toggleUserModal(false);
+        }
+
+        async function cekSesiTersimpan() {
+            try {
+                const response = await fetch('/api/auth/me', { credentials: 'include' });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (result.success) terapkanSesiPengguna(result.user);
+            } catch (error) {
+                // biarkan pengguna di layar login jika tidak bisa cek sesi
+            }
+        }
+
+        cekSesiTersimpan();
+
+        function bukaTampilanApp(targetView) {
+            document.getElementById('viewAuth').classList.add('hidden');
+            document.getElementById('viewUserApp').classList.add('hidden');
+            document.getElementById('viewAdminDashboard').classList.add('hidden');
+            
+            if (targetView === 'auth') document.getElementById('viewAuth').classList.remove('hidden');
+            if (targetView === 'user') document.getElementById('viewUserApp').classList.remove('hidden');
+            if (targetView === 'admin') document.getElementById('viewAdminDashboard').classList.remove('hidden');
+        }
+
+        function toggleUserModal(show) {
+            const modal = document.getElementById('userMenuModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function switchUserTab(tabName) {
+            document.getElementById('userTabChat').classList.add('hidden');
+            document.getElementById('userTabAbout').classList.add('hidden');
+            document.getElementById('userTabPrivacy').classList.add('hidden');
+            
+            document.getElementById('tabBtnChat').className = 'flex-1 py-1.5 px-3 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+            document.getElementById('tabBtnAbout').className = 'flex-1 py-1.5 px-3 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+            document.getElementById('tabBtnPrivacy').className = 'flex-1 py-1.5 px-3 bg-[#FFFDF9] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+
+            if (tabName === 'chat') {
+                document.getElementById('userTabChat').classList.remove('hidden');
+                document.getElementById('tabBtnChat').className = 'flex-1 py-1.5 px-3 bg-[#9FD5C0] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+            } else if (tabName === 'about') {
+                document.getElementById('userTabAbout').classList.remove('hidden');
+                document.getElementById('tabBtnAbout').className = 'flex-1 py-1.5 px-3 bg-[#FFC7A4] border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+            } else if (tabName === 'privacy') {
+                document.getElementById('userTabPrivacy').classList.remove('hidden');
+                document.getElementById('tabBtnPrivacy').className = 'flex-1 py-1.5 px-3 bg-[#C384E8] text-white border-2 border-[#4A362F] rounded-xl text-xs font-extrabold shadow-[2px_2px_0px_#4A362F]';
+            }
+        }
+
+        function getWaktu() {
+            return new Date().toTimeString().split(' ')[0];
+        }
+
+        // ==================== Download (real, tersambung ke /api/download) ====================
+
+        // ==================== Socket.IO client ====================
+
+        const socket = io({ autoConnect: false });
+        let socketSiap = false;
+
+        socket.on('connect', () => { socketSiap = true; });
+        socket.on('disconnect', () => { socketSiap = false; });
+
+        socket.on('download:new', entry => {
+            const terminalLog = document.getElementById('terminalLog');
+            if (!terminalLog) return;
+            const row = baris_terminal(entry);
+            terminalLog.appendChild(row);
+            requestAnimationFrame(() => row.classList.remove('opacity-0', 'translate-y-1'));
+            terminalLog.scrollTop = terminalLog.scrollHeight;
+        });
+
+        socket.on('stats:update', stats => {
+            const adminTotal = document.getElementById('adminTotal');
+            const adminSukses = document.getElementById('adminSukses');
+            const adminGagal = document.getElementById('adminGagal');
+            if (adminTotal) adminTotal.innerText = stats.total.toLocaleString();
+            if (adminSukses) adminSukses.innerText = stats.sukses.toLocaleString();
+            if (adminGagal) adminGagal.innerText = stats.gagal.toLocaleString();
+        });
+
+        socket.on('chat:new', msg => renderPesanChat(msg));
+
+        socket.on('chat:cleared', () => {
+            document.getElementById('chatMessages').innerHTML = '<div class="text-[9px] text-center text-gray-400 mt-2">-- Obrolan dibersihkan --</div>';
+            const adminLog = document.getElementById('adminChatLog');
+            if (adminLog) adminLog.innerHTML = '<div class="text-[9px] text-gray-500">Log bersih. Menunggu pesan baru...</div>';
+        });
+
+        socket.on('broadcast:update', broadcast => tampilkanBroadcast(broadcast));
+
+        function mulaiRealtime() {
+            if (!socket.connected) socket.connect();
+            muatRiwayatAwal();
+            muatChatAwal();
+            muatBroadcastAwal();
+            if (isAdmin) muatStatistikAdmin();
+        }
+
+        function hentikanRealtime() {
+            if (socket.connected) socket.disconnect();
+        }
+
+        // ==================== Download (real, tersambung ke /api/download) ====================
+
+        async function simulasiProses() {
+            const input = document.getElementById('urlInput');
+            const urlVal = input.value.trim();
+            if (!urlVal) {
+                input.style.borderColor = '#F0906C';
+                setTimeout(() => input.style.borderColor = '', 1200);
+                return;
+            }
+            await jalankanDownload(urlVal);
+            input.value = '';
+        }
+
+        async function eksekusiUnduhanPilihan(filename) {
+            const input = document.getElementById('urlInput');
+            const urlVal = input.value.trim();
+            if (!urlVal) {
+                input.style.borderColor = '#F0906C';
+                setTimeout(() => input.style.borderColor = '', 1200);
+                return;
+            }
+            await jalankanDownload(urlVal);
+        }
+
+        async function jalankanDownload(urlVal) {
+            const tombolAmbil = document.querySelector('button[onclick="simulasiProses()"]');
+            const teksAsli = tombolAmbil ? tombolAmbil.innerText : '';
+            if (tombolAmbil) {
+                tombolAmbil.disabled = true;
+                tombolAmbil.innerText = '...';
+            }
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ url: urlVal })
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    tampilkanHasilDownload(false, result.message || 'Gagal mengunduh.');
+                    return;
+                }
+
+                const link = cariLinkDownload(result.data);
+                if (link) window.open(link, '_blank', 'noopener,noreferrer');
+                tampilkanHasilDownload(true, 'Berhasil diambil.');
+            } catch (error) {
+                tampilkanHasilDownload(false, 'Tidak dapat menghubungi server.');
+            } finally {
+                if (tombolAmbil) {
+                    tombolAmbil.disabled = false;
+                    tombolAmbil.innerText = teksAsli;
+                }
+                // riwayat & statistik akan otomatis masuk lewat event Socket.IO
+            }
+        }
+
+        function cariLinkDownload(data, output = []) {
+            if (typeof data === 'string') {
+                if (/^https?:\/\//i.test(data)) output.push(data);
+                return output.length ? output[0] : null;
+            }
+            if (Array.isArray(data)) {
+                for (const item of data) {
+                    const hasil = cariLinkDownload(item, output);
+                    if (hasil) return hasil;
+                }
+                return null;
+            }
+            if (data && typeof data === 'object') {
+                for (const val of Object.values(data)) {
+                    const hasil = cariLinkDownload(val, output);
+                    if (hasil) return hasil;
+                }
+            }
+            return null;
+        }
+
+        function tampilkanHasilDownload(sukses, pesan) {
+            const input = document.getElementById('urlInput');
+            input.style.borderColor = sukses ? '#9FD5C0' : '#F0906C';
+            setTimeout(() => input.style.borderColor = '', 1500);
+        }
+
+        // ==================== Riwayat / Terminal Log ====================
+
+        function baris_terminal(entry) {
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 bg-[#FFFDF9] border border-[#4A362F]/30 rounded-2xl pl-3 pr-1.5 py-1.5 opacity-0 translate-y-1 transition-all duration-300';
+
+            const waktu = new Date(entry.createdAt).toTimeString().split(' ')[0];
+            const statusText = entry.success
+                ? '<span class="shrink-0 text-[8px] font-extrabold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-600">SUKSES</span>'
+                : '<span class="shrink-0 text-[8px] font-extrabold px-2 py-1 rounded-full bg-rose-500/15 text-rose-600">GAGAL</span>';
+
+            row.innerHTML = `
+                <span class="text-[#4A362F]/50 shrink-0">${waktu}</span>
+                <span class="text-[#C384E8] font-bold truncate shrink-0 max-w-[64px]">${entry.username}</span>
+                <span class="text-[#4A362F]/80 truncate flex-1">${entry.filename}</span>
+                ${statusText}
+            `;
+            return row;
+        }
+
+        async function muatRiwayatAwal() {
+            try {
+                const response = await fetch('/api/downloads', { credentials: 'include' });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (!result.success) return;
+
+                const terminalLog = document.getElementById('terminalLog');
+                terminalLog.innerHTML = '';
+                result.downloads.forEach(entry => terminalLog.appendChild(baris_terminal(entry)));
+                terminalLog.scrollTop = terminalLog.scrollHeight;
+            } catch (error) {
+                // diam saja
+            }
+        }
+
+        // ==================== Statistik Admin ====================
+
+        async function muatStatistikAdmin() {
+            try {
+                const response = await fetch('/api/admin/stats', { credentials: 'include' });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (!result.success) return;
+
+                const adminTotal = document.getElementById('adminTotal');
+                const adminSukses = document.getElementById('adminSukses');
+                const adminGagal = document.getElementById('adminGagal');
+                if (adminTotal) adminTotal.innerText = result.stats.total.toLocaleString();
+                if (adminSukses) adminSukses.innerText = result.stats.sukses.toLocaleString();
+                if (adminGagal) adminGagal.innerText = result.stats.gagal.toLocaleString();
+            } catch (error) {
+                // diam saja
+            }
+        }
+
+        // ==================== Broadcast admin (real-time via Socket.IO) ====================
+
+        async function muatBroadcastAwal() {
+            try {
+                const response = await fetch('/api/broadcast', { credentials: 'include' });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (!result.success) return;
+                tampilkanBroadcast(result.broadcast);
+            } catch (error) {
+                // diam saja
+            }
+        }
+
+        function tampilkanBroadcast(broadcast) {
+            const banner = document.getElementById('broadcastBanner');
+            const elTeks = document.getElementById('broadcastText');
+            const elImg = document.getElementById('broadcastImage');
+
+            if (!broadcast || !broadcast.active || (!broadcast.text && !broadcast.image)) {
+                banner.classList.add('hidden');
+                return;
+            }
+            if (broadcast.text) { elTeks.innerText = broadcast.text; elTeks.classList.remove('hidden'); }
+            else { elTeks.classList.add('hidden'); }
+            if (broadcast.image) { elImg.src = broadcast.image; elImg.classList.remove('hidden'); }
+            else { elImg.classList.add('hidden'); }
+            banner.classList.remove('hidden');
+        }
+
+        function kirimBroadcastAdmin() {
+            const teks = document.getElementById('adminBroadcastText').value.trim();
+            const img = document.getElementById('adminBroadcastImg').value.trim();
+            if (!teks && !img) return;
+
+            socket.emit('broadcast:send', { text: teks, image: img }, response => {
+                if (!response || !response.success) {
+                    alert((response && response.message) || 'Gagal mengirim broadcast.');
+                    return;
+                }
+                document.getElementById('adminBroadcastText').value = '';
+                document.getElementById('adminBroadcastImg').value = '';
+                alert('Broadcast berhasil disiarkan ke seluruh pengguna!');
+            });
+        }
+
+        function tutupBroadcast() {
+            document.getElementById('broadcastBanner').classList.add('hidden');
+        }
+
+        // ==================== Chat (real-time via Socket.IO) ====================
+
+        function kirimChatUser() {
+            const input = document.getElementById('chatInput');
+            const teks = input.value.trim();
+            if (!teks) return;
+            input.value = '';
+            socket.emit('chat:send', { text: teks });
+        }
+
+        function kirimChatAdmin() {
+            const input = document.getElementById('adminChatInput');
+            const teks = input.value.trim();
+            if (!teks) return;
+            input.value = '';
+            socket.emit('chat:send', { text: teks });
+        }
+
+        function renderPesanChat(msg) {
+            const isSelf = msg.sender === (currentUser || '') || (isAdmin && msg.isAdmin);
+            const waktu = new Date(msg.createdAt).toTimeString().split(' ')[0].substring(0, 5);
+
+            const alignClass = isSelf ? 'items-end' : 'items-start';
+            const nameStr = isSelf ? `${waktu} • Anda` : `${msg.sender} • ${waktu}`;
+
+            let bgClass = 'bg-[#FFFDF9]';
+            let borderClass = 'border-[#4A362F]/30';
+            let roundedClass = 'rounded-tl-none';
+            let textNameClass = 'text-gray-400';
+
+            if (isSelf) {
+                bgClass = 'bg-[#9FD5C0]/40';
+                roundedClass = 'rounded-tr-none';
+            }
+            if (msg.isAdmin) {
+                bgClass = 'bg-[#F2C266]/80';
+                borderClass = 'border-[#4A362F]';
+                textNameClass = 'text-rose-500 font-extrabold';
+            }
+
+            const html = `
+                <div class="flex flex-col gap-0.5 ${alignClass}">
+                    <span class="text-[8px] font-extrabold ${textNameClass}">${nameStr}</span>
+                    <div class="${bgClass} border-2 ${borderClass} rounded-2xl ${roundedClass} px-3.5 py-2 text-xs text-[#4A362F] font-semibold w-fit max-w-[85%]">
+                        ${escapeHtmlChat(msg.text)}
+                    </div>
+                </div>
+            `;
+            const areaUser = document.getElementById('chatMessages');
+            if (areaUser) {
+                areaUser.insertAdjacentHTML('beforeend', html);
+                areaUser.scrollTop = areaUser.scrollHeight;
+            }
+
+            if (isAdmin) {
+                const logHTML = msg.isAdmin
+                    ? `<div class="text-rose-400 font-extrabold">[${waktu}] Admin: <span class="text-white font-normal">${escapeHtmlChat(msg.text)}</span></div>`
+                    : `<div class="text-gray-300">[${waktu}] <span class="text-[#9FD5C0]">${escapeHtmlChat(msg.sender)}</span>: ${escapeHtmlChat(msg.text)}</div>`;
+                const adminLog = document.getElementById('adminChatLog');
+                if (adminLog) {
+                    adminLog.insertAdjacentHTML('beforeend', logHTML);
+                    adminLog.scrollTop = adminLog.scrollHeight;
+                }
+            }
+        }
+
+        function escapeHtmlChat(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        async function muatChatAwal() {
+            try {
+                const response = await fetch('/api/chat', { credentials: 'include' });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (!result.success) return;
+
+                document.getElementById('chatMessages').innerHTML = '';
+                const adminLog = document.getElementById('adminChatLog');
+                if (adminLog) adminLog.innerHTML = '';
+                result.messages.forEach(msg => renderPesanChat(msg));
+            } catch (error) {
+                // diam saja
+            }
+        }
+
+        function bersihkanChatSistem() {
+            fetch('/api/chat', { method: 'DELETE', credentials: 'include' }).catch(() => {});
+        }
+    </script>
+</body>
+</html>
